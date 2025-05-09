@@ -48,50 +48,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     Long countByDoctorIdAndConsultationTimeBetween(Long doctorId, LocalDateTime start, LocalDateTime end);
 
-    /**
-     * Find all appointments for a specific doctor within a specific time range.
-     *
-     * @param doctorId the ID of the doctor
-     * @param start    the start time of the range
-     * @param end      the end time of the range
-     * @return a list of appointments
-     */
-    List<Appointment> findByDoctorIdAndConsultationTimeBetween(Long doctorId, LocalDateTime start, LocalDateTime end);
-
-    /**
-     * Find all appointments for a specific consulting room within a specific time range.
-     *
-     * @param consultingRoomId the ID of the consulting room
-     * @param start            the start time of the range
-     * @param end              the end time of the range
-     * @return a list of appointments
-     */
-    List<Appointment> findByConsultingRoomIdAndConsultationTimeBetween(Long consultingRoomId, LocalDateTime start, LocalDateTime end);
-
-    /**
-     * Find all appointments within a specific time range.
-     *
-     * @param start the start time of the range
-     * @param end   the end time of the range
-     * @return a list of appointments
-     */
-    List<Appointment>findByConsultationTimeBetween( LocalDateTime start, LocalDateTime end);
-
-    /**
-     * Find all appointments for a specific doctor and consulting room within a specific time range.
-     *
-     * @param doctorId         the ID of the doctor
-     * @param consultingRoomId the ID of the consulting room
-     * @param startDateTime            the start time of the range
-     * @param endDateTime              the end time of the range
-     * @return a list of appointments
-     */
-    List<Appointment> findByDoctorIdAndConsultingRoomIdAndConsultationTimeBetween(Long doctorId, Long consultingRoomId, LocalDateTime startDateTime, LocalDateTime endDateTime);
-
-
-    Long countByConsultingRoomIdAndConsultationTime(Long consultingRoomId, LocalDateTime consultationTime);
-
-    Long countByDoctorIdAndConsultationTime(Long doctorId, LocalDateTime consultationTime);
 
 }
 

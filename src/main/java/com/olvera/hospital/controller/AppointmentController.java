@@ -162,20 +162,4 @@ public class AppointmentController {
     public ResponseEntity<AppointmentDto> edit(@PathVariable Long id, @Valid @RequestBody AppointmentDto dto) {
         return ResponseEntity.ok(appointmentService.editAppointment(id, dto));
     }
-
-
-    private String getQueryType(Long doctorId, Long consultingRoomId, String consultationDate) {
-        if (doctorId != null && consultingRoomId != null && consultationDate != null) {
-            return "DOCTOR_CONSULTING_ROOM";
-        } else if (doctorId != null) {
-            return "DOCTOR";
-        } else if (consultingRoomId != null) {
-            return "CONSULTING_ROOM";
-        } else if (consultationDate != null) {
-            return "DATE";
-        } else {
-            return "DEFAULT";
-        }
-    }
-
 }

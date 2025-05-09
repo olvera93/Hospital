@@ -16,6 +16,4 @@ public interface IAppointmentService {
 
     public AppointmentDto editAppointment(Long appointmentId, AppointmentDto appointmentDto);
 
-
-
 }

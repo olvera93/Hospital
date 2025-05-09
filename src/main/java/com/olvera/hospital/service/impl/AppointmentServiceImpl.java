@@ -132,25 +132,21 @@ public class AppointmentServiceImpl implements IAppointmentService {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
-        // Verifica que la nueva hora no sea pasada
         if (dto.getConsultationTime().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Cannot edit to a past consultation time");
         }
 
-        // Verifica si el doctor tiene ya 8 citas ese día (sin contar la actual)
         LocalDate date = dto.getConsultationTime().toLocalDate();
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.plusDays(1).atStartOfDay();
 
         long existingAppointments = appointmentRepository.countByDoctorIdAndConsultationTimeBetween(dto.getDoctorId(), start, end);
         if (!appointment.getConsultationTime().toLocalDate().equals(date)) {
-            // Solo cuenta si cambió el día
             if (existingAppointments >= 8) {
                 throw new RuntimeException("Doctor already has 8 appointments that day");
             }
         }
 
-        // Actualiza los campos
         appointment.setConsultationTime(dto.getConsultationTime());
         appointment.setPatientName(dto.getPatientName());
         appointment.setDoctor(new Doctor(dto.getDoctorId(), null, null, null, null));
@@ -164,7 +160,5 @@ public class AppointmentServiceImpl implements IAppointmentService {
                 .patientName(saved.getPatientName())
                 .build();
     }
-
-
 
 }
