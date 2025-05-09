@@ -14,10 +14,14 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static com.olvera.hospital.util.AppointmentStatus.CANCELLED;
 import static com.olvera.hospital.util.AppointmentStatus.PENDING;
 
 @Service
@@ -34,7 +38,12 @@ public class AppointmentServiceImpl implements IAppointmentService {
     @Override
     public Appointment createAppointment(AppointmentDto appointmentDto) {
 
-        LocalDateTime date =appointmentDto.getConsultationTime().toLocalDate().atStartOfDay();
+        LocalDateTime requestedTime = appointmentDto.getConsultationTime();
+        LocalDate date = requestedTime.toLocalDate();
+
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
         LocalDateTime time = appointmentDto.getConsultationTime();
 
         if (appointmentRepository.existsByConsultingRoomIdAndConsultationTime(appointmentDto.getConsultingRoomId(), time)) {
@@ -46,7 +55,7 @@ public class AppointmentServiceImpl implements IAppointmentService {
         }
 
         List<Appointment> sameDayAppointments = appointmentRepository
-                .findByPatientNameAndConsultationTime(appointmentDto.getPatientName(), date);
+                .findByPatientNameAndConsultationTimeBetween(appointmentDto.getPatientName(), startOfDay, endOfDay);
 
         for (Appointment existing : sameDayAppointments) {
             long minutes = Math.abs(ChronoUnit.MINUTES.between(existing.getConsultationTime(), time));
@@ -55,7 +64,7 @@ public class AppointmentServiceImpl implements IAppointmentService {
             }
         }
 
-        Long doctorsCount = appointmentRepository.countByDoctorIdAndConsultationTime(appointmentDto.getDoctorId(), date);
+        Long doctorsCount = appointmentRepository.countByDoctorIdAndConsultationTimeBetween(appointmentDto.getDoctorId(), startOfDay, endOfDay);
 
         if (doctorsCount >= 8) {
             throw new IllegalArgumentException("Doctor cannot have more than 8 appointments per day.");
@@ -83,6 +92,78 @@ public class AppointmentServiceImpl implements IAppointmentService {
         return appointmentSaved;
     }
 
+
+    @Override
+    public List<AppointmentDto> filterAppointments(Long doctorId, Long consultingRoomId, LocalDateTime start, LocalDateTime end) {
+        List<Appointment> appointments = appointmentRepository.findAll();
+
+        return appointments.stream()
+                .filter(a -> doctorId == null || a.getDoctor().getId().equals(doctorId))
+                .filter(a -> consultingRoomId == null || a.getConsultingRoom().getId().equals(consultingRoomId))
+                .filter(a -> start == null ||
+                        (a.getConsultationTime().isEqual(start) || a.getConsultationTime().isAfter(start)) &&
+                                a.getConsultationTime().isBefore(end))
+                .map(
+                        appointment -> AppointmentDto.builder()
+                                .doctorId(appointment.getDoctor().getId())
+                                .consultingRoomId(appointment.getConsultingRoom().getId())
+                                .consultationTime(appointment.getConsultationTime())
+                                .patientName(appointment.getPatientName())
+                                .build()
+                )
+                .toList();
+    }
+
+    @Override
+    public boolean cancelAppointment(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
+
+        if (appointment == null || !appointment.getStatus().equals(PENDING)) {
+            return false;
+        }
+
+        appointment.setStatus(CANCELLED);
+        appointmentRepository.delete(appointment);
+        return true;
+    }
+
+    @Override
+    public AppointmentDto editAppointment(Long id, AppointmentDto dto) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        // Verifica que la nueva hora no sea pasada
+        if (dto.getConsultationTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Cannot edit to a past consultation time");
+        }
+
+        // Verifica si el doctor tiene ya 8 citas ese día (sin contar la actual)
+        LocalDate date = dto.getConsultationTime().toLocalDate();
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.plusDays(1).atStartOfDay();
+
+        long existingAppointments = appointmentRepository.countByDoctorIdAndConsultationTimeBetween(dto.getDoctorId(), start, end);
+        if (!appointment.getConsultationTime().toLocalDate().equals(date)) {
+            // Solo cuenta si cambió el día
+            if (existingAppointments >= 8) {
+                throw new RuntimeException("Doctor already has 8 appointments that day");
+            }
+        }
+
+        // Actualiza los campos
+        appointment.setConsultationTime(dto.getConsultationTime());
+        appointment.setPatientName(dto.getPatientName());
+        appointment.setDoctor(new Doctor(dto.getDoctorId(), null, null, null, null));
+        appointment.setConsultingRoom(new ConsultingRoom(dto.getConsultingRoomId(), null, null));
+
+        Appointment saved = appointmentRepository.save(appointment);
+        return AppointmentDto.builder()
+                .doctorId(saved.getDoctor().getId())
+                .consultingRoomId(saved.getConsultingRoom().getId())
+                .consultationTime(saved.getConsultationTime())
+                .patientName(saved.getPatientName())
+                .build();
+    }
 
 
 
