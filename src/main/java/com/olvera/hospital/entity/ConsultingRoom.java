@@ -12,11 +12,12 @@ import lombok.*;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class ConsultingRoom {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long consultingRoomId;
+    private Long id;
 
     private String roomNumber;
 

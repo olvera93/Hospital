@@ -1,5 +1,6 @@
 package com.olvera.hospital.entity;
 
+import com.olvera.hospital.util.AppointmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,11 +12,12 @@ import java.time.LocalDateTime;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Appointment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long appointmentId;
+    private Long id;
 
     @ManyToOne
     private Doctor doctor;
@@ -26,4 +28,7 @@ public class Appointment {
     private LocalDateTime consultationTime;
 
     private String patientName;
+
+    @Enumerated(EnumType.STRING)
+    private AppointmentStatus status;
 }
