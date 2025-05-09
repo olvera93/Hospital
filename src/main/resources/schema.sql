@@ -1,6 +1,6 @@
 -- Table: doctor
 CREATE TABLE doctor (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    doctor_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     middle_name VARCHAR(100),
@@ -9,7 +9,7 @@ CREATE TABLE doctor (
 
 -- Table: consulting_room
 CREATE TABLE consulting_room (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    consulting_room_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     room_number INT NOT NULL,
     floor INT NOT NULL
 );
